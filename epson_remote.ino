@@ -52,17 +52,20 @@ POWER getPower()
 	if (result.equals("PWR=05"))
 		return ABNORMALSTANDBY;
 
+	report("unexpected status: " + result);
 	return UNKNOWN;
 }
 
 int power(String arg)
 {
-	if (arg.equals("ON"))
+	if (arg.equals("ON") || arg.equals("1"))
 		return powerOn(arg);
-	if (arg.equals("OFF"))
+	if (arg.equals("OFF") || arg.equals("0"))
 		return powerOff(arg);
 	if (arg.equals("?"))
 		return powerStatus(arg);
+
+	report("unexpected arg: '" + arg + "'");
 	return -1;
 }
 
@@ -169,5 +172,4 @@ String sendCommand(String cmd)
 	result.trim();
 	return result;
 }
-
 
