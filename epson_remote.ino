@@ -99,7 +99,7 @@ int powerOff(String arg)
 int powerStatus(String arg)
 {
 	const POWER status = getPower();
-	if (status == UNKNOW)
+	if (status == UNKNOWN)
 		return -1;
 	return (status == ON || status == WARMUP) ? 1 : 0;
 }
