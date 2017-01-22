@@ -70,7 +70,7 @@ int powerOn(String arg)
 {
 	const POWER status = getPower();
 	if (status == ON || status == WARMUP)
-		return 1;
+		return 0;
 
 	const String result = sendCommand("PWR ON");
 	if (detectError(result, "projector turn on failed"))
@@ -78,14 +78,14 @@ int powerOn(String arg)
 	report("PWR ON: " + result);
 	const bool cond = result.equals("");
 	cond ? report("projector turned on") : report("projector turn on failed");
-	return cond ? 1 : 0;
+	return cond ? 0 : -1;
 }
 
 int powerOff(String arg)
 {
 	const POWER status = getPower();
 	if (status == OFF || status == STANDBYNETWORKON)
-		return 1;
+		return 0;
 
 	const String result = sendCommand("PWR OFF");
 	if (detectError(result, "projector turn off failed"))
@@ -93,25 +93,28 @@ int powerOff(String arg)
 	report("PWR OFF: " + result);
 	const bool cond = result.equals("");
 	cond ? report("projector turned off") : report("projector turn off failed");
-	return cond ? 1 : 0;
+	return cond ? 0 : -1;
 }
 
 int powerStatus(String arg)
 {
 	const POWER status = getPower();
+	if (status == UNKNOW)
+		return -1;
 	return (status == ON || status == WARMUP) ? 1 : 0;
 }
 
 int checkError(String arg)
 {
 	const String result = sendCommand("ERR?");
+	if (result.startsWith("ERR="))
+		result.substring(4);
 	return result.toInt();
 }
 
 int ok(String arg)
 {
-	const String result = sendCommand("ERR?");
-	return result.toInt() == 0 ? 1 : 0;
+	return checkError(arg) == 0 ? 0 : -1;
 }
 
 
