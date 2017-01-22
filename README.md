@@ -42,6 +42,7 @@ Due to the limitations of the Particle Cloud, functions are required to return i
 * `error` checks for an error and currently only returns the EPSON error code as integer. `0` means no error.
 * `ok` is basically the same as `error` above, but maps all errors to `-1`. If no errors are reported by the projector the return value is `0`.
 
+I disabled the default behavior of the RGB LED on the Particle Photon. It is constantly turned off. While sending a command it turns red, while reading a response from the projector it turns green.
 
 # Resources
 
