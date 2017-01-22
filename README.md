@@ -2,20 +2,32 @@
 
 A simple EPSON projector remote via RS232 running on a Particle Photon.
 
-This is not intended to be as exhaustive as openHAB's addon. The plan is to have a small feature set of just powering on and off, as (sadly) more than that is not yet supported by Apple's HomeKit and this small project is just a relais for a [homebridge](https://github.com/nfarina/homebridge) plugin I want to write.
+This is not intended to be as exhaustive as openHAB's addon. The plan is to have a small feature set of just powering on and off, as (sadly) more than that is not yet supported by Apple's HomeKit. This small project is just a relais to use with my [homebridge particle.io plugin](https://github.com/norman-thomas/homebridge-particle-io) so I can turn on my projector via Siri.
 
 This was tested using an EPSON EH-TW4400 projector.
 
 
 # Setup
 
-## Tools
+![What the setup looks like](setup.jpg)
+
+## Equipment
 
 * Particle Photon
 * EPSON projector (EH-TW 4400, in my case)
 * RS232 interface (MAX3232 chip)
 * 4 jumper wires
 
+## Wiring
+
+The Wiring is very straight-forward. Simply connect the following pins from your Particle device to the MAX3232 (RS232) board:
+
+* `Vin`—`Vcc`
+* `GND`—`GND`
+* `RX`—`TXD`
+* `TX`—`RXD`
+
+Just pay attention to really connect the RX(D) with TX(D) and vice versa.
 
 # Commands
 
