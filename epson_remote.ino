@@ -1,4 +1,57 @@
+#include <MQTT.h>
+
 const int LED = D7;
+
+void callback(char* topic, byte* payload, unsigned int length);
+
+MQTT client("SERVER", 1883, 120, callback);
+
+// for QoS2 MQTTPUBREL message.
+// this messageid maybe have store list or array structure.
+uint16_t qos2messageid = 0;
+
+// recieve message
+void callback(char* topic, byte* payload, unsigned int length) {
+    char p[length + 1];
+    memcpy(p, payload, length);
+    p[length] = NULL;
+    
+    String payload_str = String(p);
+    String topic_str = String(topic);
+    
+    if (topic_str.equals("projector/refresh")) {
+        powerStatus("");
+    }
+    else if (topic_str.equals("projector/power")) {
+        if (payload_str.equals("on"))
+        {
+            powerOn("");
+        }
+        else if (payload_str.equals("off"))
+        {
+            powerOff("");
+        }
+        else if (payload_str.equals("?"))
+        {
+            powerStatus("");
+        }
+    }
+
+    delay(1000);
+}
+
+// QOS ack callback.
+// if application use QOS1 or QOS2, MQTT server sendback ack message id.
+void qoscallback(unsigned int messageid) {
+    Serial.print("Ack Message Id:");
+    Serial.println(messageid);
+
+    if (messageid == qos2messageid) {
+        Serial.println("Release QoS2 Message");
+        client.publishRelease(qos2messageid);
+    }
+}
+
 
 void setup()
 {
@@ -12,9 +65,23 @@ void setup()
 	Particle.function("power_status", powerStatus);
 	Particle.function("error", checkError);
 	Particle.function("ok", ok);
+	
+	// connect to the server
+    client.connect(System.deviceID());
+
+    // add qos callback. If don't add qoscallback, ACK message from MQTT server is ignored.
+    client.addQosCallback(qoscallback);
+    
+    if (client.isConnected()) {
+         client.subscribe("projector/refresh");
+         client.subscribe("projector/power");
+    }
 }
 
-void loop() {}
+void loop() {
+    if (client.isConnected())
+        client.loop();
+}
 
 
 // **************
@@ -52,7 +119,7 @@ POWER getPower()
 	if (result.equals("PWR=05"))
 		return ABNORMALSTANDBY;
 
-	report("unexpected status: " + result);
+    report("unexpected status: " + result);
 	return UNKNOWN;
 }
 
@@ -62,9 +129,9 @@ int power(String arg)
 		return powerOn(arg);
 	if (arg.equals("OFF") || arg.equals("0"))
 		return powerOff(arg);
-	if (arg.equals("?"))
+	if (arg.equals("?") || arg.equals(""))
 		return powerStatus(arg);
-
+		
 	report("unexpected arg: '" + arg + "'");
 	return -1;
 }
@@ -73,13 +140,23 @@ int powerOn(String arg)
 {
 	const POWER status = getPower();
 	if (status == ON || status == WARMUP)
+	{
+	    client.publish("projector/status", "on");
 		return 0;
+	}
 
 	const String result = sendCommand("PWR ON");
 	if (detectError(result, "projector turn on failed"))
+    {
+        //client.publish("projector/status", "error");
 		return -1;
+    }
+    
 	report("PWR ON: " + result);
 	const bool cond = result.equals("");
+	String status_str = cond ? "on" : "off";
+	Particle.publish("power", status_str);
+	client.publish("projector/status", status_str);
 	cond ? report("projector turned on") : report("projector turn on failed");
 	return cond ? 0 : -1;
 }
@@ -88,13 +165,23 @@ int powerOff(String arg)
 {
 	const POWER status = getPower();
 	if (status == OFF || status == STANDBYNETWORKON)
+	{
+	    client.publish("projector/status", "on");
 		return 0;
+	}
 
 	const String result = sendCommand("PWR OFF");
 	if (detectError(result, "projector turn off failed"))
+	{
+	    //client.publish("projector/status", "error");
 		return -1;
+	}
+	
 	report("PWR OFF: " + result);
 	const bool cond = result.equals("");
+	String status_str = cond ? "off" : "on";
+	Particle.publish("power", status_str);
+	client.publish("projector/status", status_str);
 	cond ? report("projector turned off") : report("projector turn off failed");
 	return cond ? 0 : -1;
 }
@@ -103,7 +190,13 @@ int powerStatus(String arg)
 {
 	const POWER status = getPower();
 	if (status == UNKNOWN)
+	{
+	    //client.publish("projector/status", "unknown");
 		return -1;
+	}
+	String status_str = (status == ON || status == WARMUP) ? "on" : "off";
+	Particle.publish("power", status_str);
+	client.publish("projector/status", status_str);
 	return (status == ON || status == WARMUP) ? 1 : 0;
 }
 
@@ -172,4 +265,3 @@ String sendCommand(String cmd)
 	result.trim();
 	return result;
 }
-
