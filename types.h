@@ -1,0 +1,12 @@
+enum POWER {
+  UNKNOWN = -1,
+  OFF = 0,
+  ON = 1,
+  WARMUP = 2,
+  COOLINGDOWN = 3,
+  STANDBYNETWORKON = 4,
+  ABNORMALSTANDBY = 5
+};
+// enum SOURCE { MEDIAPLAYER = 30 };
+// enum LUMINANCE { NORMAL = 0, ECO = 1 };
+
