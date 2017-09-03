@@ -21,6 +21,8 @@
 #define DEFAULT_REFRESH_RATE 30
 //#define BUILTIN_LED D7
 
+String mqtt_client_id = "";
+
 unsigned long lastMeasurementTime = 0;
 unsigned int refresh_rate = DEFAULT_REFRESH_RATE; // seconds
 
@@ -40,7 +42,7 @@ void setup() {
   Serial.println();
   swSer.begin(9600);//, SERIAL_8N1);
 
-  String myName = String(ESP.getChipId());
+  mqtt_client_id = String(ESP.getChipId());
   Serial.print("ESP Chip ID: ");
   Serial.println(ESP.getChipId());
 
@@ -48,7 +50,7 @@ void setup() {
   mqttClient.onMessage(process_mqtt_subscriptions);
 
   wifi::maintain_wifi_connection(WLAN_SSID, WLAN_PASS);
-  mqtt::maintain_connection(mqttClient, myName.c_str(), mqtt_subscriptions);
+  mqtt::maintain_connection(mqttClient, mqtt_client_id.c_str(), mqtt_subscriptions);
 
   Serial.println("Switching off internal LED");
   digitalWrite(BUILTIN_LED, HIGH);
@@ -71,7 +73,7 @@ void process_mqtt_subscriptions(String &topic, String &payload) {
 
 void loop() {
   wifi::maintain_wifi_connection(WLAN_SSID, WLAN_PASS);
-  mqtt::maintain_connection(mqttClient, MQTT_PREFIX_ROOM, mqtt_subscriptions);
+  mqtt::maintain_connection(mqttClient, mqtt_client_id.c_str(), mqtt_subscriptions);
 
   mqttClient.loop();
 
@@ -211,23 +213,23 @@ void report(String descr)
 
 void write(String cmd)
 {
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(BUILTIN_LED, LOW);
   swSer.print(cmd);
   swSer.print("\r");
   delay(100);
-  digitalWrite(BUILTIN_LED, LOW);
+  digitalWrite(BUILTIN_LED, HIGH);
 }
 
 String read()
 {
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(BUILTIN_LED, LOW);
   String result = "";
   while (swSer.available() > 0)
   {
     result.concat((char) swSer.read());
   }
   delay(100);
-  digitalWrite(BUILTIN_LED, LOW);
+  digitalWrite(BUILTIN_LED, HIGH);
   return result;
 }
 
